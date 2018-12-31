@@ -52,7 +52,6 @@ class Maze:
         bot_coord = min(coords_init[0], coords_moved[0])
         cross = (barrier[0] <= crossx <= barrier[1]) and (bot_coord <= crossx <= top_coord)
         if cross:
-            print("CROSSED !")
             coords_moved = crossx, barrier[2] * crossx + barrier[3]
             coords_moved = Maze.move_coords(coords_moved, action, - rebound)
             return coords_moved
