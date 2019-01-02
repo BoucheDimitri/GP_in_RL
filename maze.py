@@ -39,14 +39,13 @@ class Maze:
     #     cross = (barrier[0] <= crossx <= barrier[1]) and (bot_coord <= crossx <= top_coord)
     #     return cross
 
-
     @staticmethod
     def barrier_step_diag_horizontal(coords_init, coords_moved, action, barrier, rebound):
         c = (coords_moved[1] - coords_init[1]) / (coords_moved[0] - coords_init[0])
         d = coords_init[1] - c * coords_init[0]
         # Paralell move so no crossing
         if c == barrier[2]:
-            return coords_moved
+            return np.array(coords_moved)
         crossx = (barrier[3] - d) / (c - barrier[2])
         top_coord = max(coords_init[0], coords_moved[0])
         bot_coord = min(coords_init[0], coords_moved[0])
@@ -54,9 +53,9 @@ class Maze:
         if cross:
             coords_moved = crossx, barrier[2] * crossx + barrier[3]
             coords_moved = Maze.move_coords(coords_moved, action, - rebound)
-            return coords_moved
+            return np.array(coords_moved)
         else:
-            return coords_moved
+            return np.array(coords_moved)
 
     # @staticmethod
     # def barrier_test_vertical(coords_init, coords_moved, barrier):
@@ -76,7 +75,7 @@ class Maze:
     @staticmethod
     def barrier_step_vertical(coords_init, coords_moved, action, barrier, rebound):
         if coords_init[0] < barrier[0] or coords_init[0] > barrier[1]:
-            return coords_moved
+            return np.array(coords_moved)
         else:
             y = barrier[2] * coords_init[0] + barrier[3]
             top_coord = max(coords_init[1], coords_moved[1])
@@ -84,9 +83,9 @@ class Maze:
             if bot_coord <= y <= top_coord:
                 coords_moved = coords_init[0], y
                 coords_moved = Maze.move_coords(coords_moved, action, - rebound)
-                return coords_moved
+                return np.array(coords_moved)
             else:
-                return coords_moved
+                return np.array(coords_moved)
 
     # @staticmethod
     # def barrier_test(coords_init, coords_moved, barrier):
@@ -105,25 +104,25 @@ class Maze:
     @staticmethod
     def move_coords(coords, action, pace):
         if action == 0:
-            return coords[0], coords[1] + pace
+            return np.array((coords[0], coords[1] + pace))
         elif action == 1:
             sqrt2 = np.sqrt(2)
-            return coords[0] + pace / sqrt2, coords[1] + pace / sqrt2
+            return np.array((coords[0] + pace / sqrt2, coords[1] + pace / sqrt2))
         elif action == 2:
-            return coords[0] + pace, coords[1]
+            return np.array((coords[0] + pace, coords[1]))
         elif action == 3:
             sqrt2 = np.sqrt(2)
-            return coords[0] + pace / sqrt2, coords[1] - pace / sqrt2
+            return np.array((coords[0] + pace / sqrt2, coords[1] - pace / sqrt2))
         elif action == 4:
-            return coords[0], coords[1] - pace
+            return np.array((coords[0], coords[1] - pace))
         elif action == 5:
             sqrt2 = np.sqrt(2)
-            return coords[0] - pace / sqrt2, coords[1] - pace / sqrt2
+            return np.array((coords[0] - pace / sqrt2, coords[1] - pace / sqrt2))
         elif action == 6:
-            return coords[0] - pace, coords[1]
+            return np.array(coords[0] - pace, coords[1])
         else:
             sqrt2 = np.sqrt(2)
-            return coords[0] - pace / sqrt2, coords[1] + pace / sqrt2
+            return np.array((coords[0] - pace / sqrt2, coords[1] + pace / sqrt2))
 
     def is_terminal(self, state):
         for goal in self.goals:
@@ -175,7 +174,7 @@ class Maze:
     def reset(self):
         x = np.random.uniform(0, self.len_x)
         y = np.random.uniform(0, self.len_y)
-        return x, y
+        return np.array((x, y))
 
     @staticmethod
     def plot_barrier(barrier, ax, npoints):
