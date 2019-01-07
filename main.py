@@ -75,28 +75,58 @@ kt = gptd.compute_k(xdict, x[1], kernel)
 # In this case (first add to dictionnary) this is equal to ktt
 ktminus1 = gptd.compute_k(xdict, x[0], kernel)
 # Compute epsilon for test
-a = gptd.compute_a(kt, Kinv)
-eps = gptd.compute_epsilon(ktt, kt, a)
-# Force add to dictionnary
-xdict = np.concatenate((xdict, x[1].reshape((2, 1))), axis=1)
-Kinv = gptd.augment_Kinv(eps, a, Kinv)
-# We initialize H instead of updating it for the first augmentation step
-H = gptd.initialize_H(gamma)
-# We intialize Q instead of updating it for the first augmentation step
-# For that we need to create the kernel matrix
-# TODO: is this correct ? Formula imply that the shape of Qt should be (t - 1, t - 1)
-K = gptd.compute_K(xdict, kernel)
-Q = gptd.intialize_Q(K, H, sigma0)
-# At first step we compute alpha directly since we cannot define the recursions
-# TODO: Should we initialize r this way (with reward in initialize state equal to -1) ?
-alpha = gptd.initialize_alpha(H, Q, np.array([-1, r[0]]))
+at = gptd.compute_a(kt, Kinv)
+eps = gptd.compute_epsilon(ktt, kt, at)
+# Add to dictionnary test
+if eps > nu:
+    xdict = np.concatenate((xdict, x[1].reshape((2, 1))), axis=1)
+    Kinv = gptd.augment_Kinv(eps, at, Kinv)
+    # We initialize H instead of updating it for the first augmentation step
+    H = gptd.initialize_H(gamma)
+    # We intialize Q instead of updating it for the first augmentation step
+    # For that we need to create the kernel matrix
+    K = gptd.compute_K(xdict, kernel)
+    Q = gptd.intialize_Q(K, H, sigma0)
+    # At first step we compute alpha directly since we cannot define the recursions
+    alpha = gptd.initialize_alpha(H, Q, np.array([-1]))
+    # At first step we compute C directly since we cannot define the recursions
+    C = gptd.initialize_C(H, Q)
 
 
-# Second step
+# Second step (t=3)
+
+xdict, Kinv, H, Q, ahat_t,at, alpha, C = gptd.first_step(x[0], x[1], -1, gamma, sigma0, kernel)
+
+atminus1 = at
+ahat_tminus1 = ahat_t
+
+test, ahat_t, k, eps = gptd.test_phase(xdict, x[2], Kinv, nu, kernel)
+
+#
+# deltak_tminus1 = gptd.compute_k(xdict, xdict[:, -1], kernel) - gamma * k
+#
+# deltak_tt = gptd.compute_deltak_tt(atminus1, deltak_tminus1, k, kernel.k(x[2], x[2]), gamma)
+
+# Kinv = gptd.augment_Kinv(eps, ahat_t, Kinv)
+# Ht = gptd.augment_H_case2(H, atminus1, gamma)
+# deltak_tminus1 = gptd.compute_k(xdict, xdict[:, -1], kernel) - gamma * k
+# gt = gptd.compute_g(Q, H, deltak_tminus1)
+# st = gptd.compute_hat_s(atminus1, kt, kernel.k(x[2], x[2]), sigma0, deltak_tminus1, C, gamma)
+# ct = gptd.compute_hat_c(H, gt, atminus1)
+# alpha_t = gptd.update_alpha_case2(alpha, deltak_tminus1, ct, st, -1, gamma)
+# Ct = gptd.update_C_case2(C, ct, st, gamma)
+# Qt = gptd.augment_Q(Q, st, gt)
+# xdict = np.concatenate((xdict, x[2].reshape((2, 1))), axis=1)
 
 
-
-
+if not test:
+    # atminus1 = ahat_tminus1
+    H, Q, alpha, C = gptd.iterate_case1(xdict, r[1], atminus1, ahat_t, H, Q, k, alpha, C, gamma, sigma0, kernel)
+else:
+    # atminus1 =
+    xdict, Kinv, H, Q, alpha, C = gptd.iterate_case2(xdict, x[2], r[1], atminus1, ahat_t, eps, Kinv, H, Q, k, alpha, C, gamma, sigma0, kernel)
+    atminus1 = np.zeros(xdict.shape[1])
+    atminus1[-1] = 1
 
 
 
