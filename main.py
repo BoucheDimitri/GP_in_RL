@@ -1,6 +1,7 @@
 import numpy as np
 import importlib
 import matplotlib.pyplot as plt
+from matplotlib import ticker, cm
 
 import maze
 import utils
@@ -21,8 +22,8 @@ barrier3 = (0.7, 1.1, -0.5, 0.6)
 barrier4 = (0.2, 0.55, 0.5, 0.1)
 
 env.add_barrier(barrier1[0], barrier1[1], barrier1[2], barrier1[3])
-# env.add_barrier(barrier2[0], barrier2[1], barrier2[2], barrier2[3])
-# env.add_barrier(barrier3[0], barrier3[1], barrier3[2], barrier3[3])
+env.add_barrier(barrier2[0], barrier2[1], barrier2[2], barrier2[3])
+env.add_barrier(barrier3[0], barrier3[1], barrier3[2], barrier3[3])
 # env.add_barrier(barrier4[0], barrier4[1], barrier4[2], barrier4[3])
 
 
@@ -36,18 +37,28 @@ policy = policies.SimplePolicy([0, 0, 0, 0, 0.8, 0, 0, 0])
 
 
 # Simulate trajectories
-N = 1
+N = 10
 T = 1000
 trajs = utils.collect_trajectories(env, policy, T, N)
 
 x = trajs[0]["states"]
 r = trajs[0]["rewards"]
 
+xconcat = []
+rconcat = []
+for n in range(N):
+    xconcat += trajs[n]["states"]
+    r = trajs[n]["rewards"]
+    r.reverse()
+    r.append(-1)
+    r.reverse()
+    rconcat += r
+
 
 # Plot maze and trajectory
 test_traj = trajs[0]
-moves_x = [t[0] for t in test_traj["states"]]
-moves_y = [t[1] for t in test_traj["states"]]
+moves_x = [t[0] for t in xconcat]
+moves_y = [t[1] for t in xconcat]
 env.plot()
 plt.plot(moves_x, moves_y, color="C3", marker="o")
 
@@ -127,6 +138,87 @@ else:
     xdict, Kinv, H, Q, alpha, C = gptd.iterate_case2(xdict, x[2], r[1], atminus1, ahat_t, eps, Kinv, H, Q, k, alpha, C, gamma, sigma0, kernel)
     atminus1 = np.zeros(xdict.shape[1])
     atminus1[-1] = 1
+
+
+
+alpha, C, xdict, Kinv, H, Q = gptd.iterate_gptd(xconcat, rconcat, gamma, nu, sigma0, kernel)
+
+
+alpha = H.T.dot(Q).dot(np.array(rconcat[:1077]))
+C = H.T.dot(Q).dot(H)
+
+
+coord1, coord2 = np.meshgrid(np.arange(0, 1.05, 0.05), np.arange(0, 1.05, 0.05))
+# M = np.zeros((coord1.shape[0], coord1.shape[0]))
+S = np.zeros((coord1.shape[0], coord1.shape[0]))
+
+for i in range(0, n):
+    for j in range(0, n):
+        xnew = np.array([coord1[i, j], coord2[i, j]])
+        v, p = gptd.compute_state_mean_variance(xdict, xnew, alpha, C, kernel)
+        # M[i, j] = v
+        S[i, j] = p
+
+
+
+plt.figure()
+env.plot()
+plt.contourf(coord1, coord2, S)
+plt.colorbar()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

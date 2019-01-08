@@ -110,7 +110,7 @@ def augment_Q(Q, s, g):
     Q_augmented[-1, 0:nminus1] = g.T
     Q_augmented[0: nminus1, -1] = g
     Q_augmented[-1, -1] = 1
-    return Q_augmented
+    return (1 / s) * Q_augmented
 
 
 def update_alpha_case1(alpha_tminus1, deltak_tminus1, ct, st, rtminus1):
@@ -278,3 +278,29 @@ def iterate_case2(xdict,
     Qt = augment_Q(Qtminus1, st, gt)
     xdict = np.concatenate((xdict, xnew.reshape((2, 1))), axis=1)
     return xdict, Kinv, Ht, Qt, alpha_t, Ct
+
+
+def iterate_gptd(x, r, gamma, nu, sigma0, kernel):
+    xdict, Kinv, H, Q, ahat_t, at, alpha, C = first_step(x[0], x[1], r[0], gamma, sigma0, kernel)
+    atminus1 = at
+    for t in range(2, len(x)):
+        test, ahat_t, k, eps = test_phase(xdict, x[t], Kinv, nu, kernel)
+        if not test:
+            H, Q, alpha, C = iterate_case1(xdict, r[t - 1], atminus1, ahat_t, H, Q, k, alpha, C, gamma, sigma0, kernel)
+            atminus1 = ahat_t
+        else:
+            xdict, Kinv, H, Q, alpha, C = iterate_case2(xdict, x[t], r[t - 1], atminus1, ahat_t, eps, Kinv, H, Q, k,
+                                                        alpha, C, gamma, sigma0, kernel)
+            atminus1 = np.zeros(xdict.shape[1])
+            atminus1[-1] = 1
+        print(t)
+    return alpha, C, xdict, Kinv, H, Q
+
+
+def compute_state_mean_variance(xdict, xnew, alpha, C, kernel):
+    kt = compute_k(xdict, xnew, kernel)
+    ktt = kernel.k(xnew, xnew)
+    vt = np.dot(kt, alpha)
+    pt = ktt - kt.dot(C).dot(kt)
+    return vt, pt
+
