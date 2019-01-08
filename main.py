@@ -7,10 +7,12 @@ import maze
 import utils
 import policies
 import gptd
+import offline_benchmark as off_bench
 
 importlib.reload(maze)
 importlib.reload(utils)
 importlib.reload(gptd)
+importlib.reload(off_bench)
 
 
 # ############# BUILD MAZE #############################################################################################
@@ -37,7 +39,7 @@ policy = policies.SimplePolicy([0, 0, 0, 0, 0.8, 0, 0, 0])
 
 
 # Simulate trajectories
-N = 10
+N = 1
 T = 1000
 trajs = utils.collect_trajectories(env, policy, T, N)
 
@@ -57,8 +59,8 @@ for n in range(N):
 
 # Plot maze and trajectory
 test_traj = trajs[0]
-moves_x = [t[0] for t in xconcat]
-moves_y = [t[1] for t in xconcat]
+moves_x = [t[0] for t in x]
+moves_y = [t[1] for t in x]
 env.plot()
 plt.plot(moves_x, moves_y, color="C3", marker="o")
 
@@ -141,19 +143,20 @@ else:
 
 
 
-alpha, C, xdict, Kinv, H, Q = gptd.iterate_gptd(xconcat, rconcat, gamma, nu, sigma0, kernel)
+alpha, C, xdict, Kinv, H, Q = gptd.iterate_gptd(x, r, gamma, nu, sigma0, kernel)
 
 
-alpha = H.T.dot(Q).dot(np.array(rconcat[:1077]))
+alpha = H.T.dot(Q).dot(r)
 C = H.T.dot(Q).dot(H)
 
 
 coord1, coord2 = np.meshgrid(np.arange(0, 1.05, 0.05), np.arange(0, 1.05, 0.05))
 # M = np.zeros((coord1.shape[0], coord1.shape[0]))
 S = np.zeros((coord1.shape[0], coord1.shape[0]))
+nx = coord1.shape[0]
 
-for i in range(0, n):
-    for j in range(0, n):
+for i in range(0, nx):
+    for j in range(0, nx):
         xnew = np.array([coord1[i, j], coord2[i, j]])
         v, p = gptd.compute_state_mean_variance(xdict, xnew, alpha, C, kernel)
         # M[i, j] = v
@@ -163,6 +166,7 @@ for i in range(0, n):
 
 plt.figure()
 env.plot()
+plt.plot(moves_x, moves_y, color="C3", marker="o")
 plt.contourf(coord1, coord2, S)
 plt.colorbar()
 
@@ -171,29 +175,60 @@ plt.colorbar()
 
 
 
+################" OFFLINE BENCHMARK ###############################################################""
+
+xdict_bis = utils.trajectory_list_to_ndarray(x)
+rbis = np.array(r)
+
+t = xdict_bis.shape[1]
+H = off_bench.form_H(t, gamma)
+Q = off_bench.form_Q(xdict_bis, H, sigma0, kernel)
+alpha = off_bench.compute_alpha(H, Q, rbis[:t-1])
+C = off_bench.compute_C(H, Q)
+
+
+coord1, coord2 = np.meshgrid(np.arange(0, 1.05, 0.05), np.arange(0, 1.05, 0.05))
+nx = coord1.shape[0]
+M = np.zeros((coord1.shape[0], coord1.shape[0]))
+S = np.zeros((coord1.shape[0], coord1.shape[0]))
+
+for i in range(0, nx):
+    for j in range(0, nx):
+        xnew = np.array([coord1[i, j], coord2[i, j]])
+        v, p = off_bench.get_mean_variance(xdict_bis, xnew, alpha, C, kernel)
+        M[i, j] = v
+        S[i, j] = p
+
+
+
+plt.figure()
+# env.plot()
+plt.contourf(coord1, coord2, M)
+plt.plot(moves_x, moves_y, color="C3", marker="o")
+plt.colorbar()
+
+
+xcenter = np.array([0.5, 0.5])
+Ktest = np.zeros((coord1.shape[0], coord1.shape[0]))
+for i in range(0, n):
+    for j in range(0, n):
+        xnew = np.array([coord1[i, j], coord2[i, j]])
+        print(xnew)
+        Ktest[i, j] = kernel.k(xcenter, xnew)
+
+
+
+test2 = coord1**2 + coord2**2
+plt.figure()
+# env.plot()
+plt.pcolormesh(coord1, coord2, Ktest)
+plt.colorbar()
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+xfixed = 0.5
+test = [kernel.k(np.array([xfixed, y]), xcenter) for y in np.arange(0, 1, 0.01)]
 
 
 

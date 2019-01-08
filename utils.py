@@ -21,3 +21,11 @@ def collect_trajectories(env, policy, T, N):
     return trajs
 
 
+def trajectory_list_to_ndarray(xtrajs):
+    ntrajs = len(xtrajs)
+    xarray = np.zeros((2, ntrajs))
+    for i in range(ntrajs):
+        xarray[:, i] = xtrajs[i]
+    return xarray
+
+
