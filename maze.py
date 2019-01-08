@@ -101,6 +101,7 @@ class Maze:
         else:
             return Maze.barrier_step_diag_horizontal(coords_init, coords_moved, action, barrier, rebound)
 
+
     @staticmethod
     def move_coords(coords, action, pace):
         if action == 0:
@@ -119,7 +120,7 @@ class Maze:
             sqrt2 = np.sqrt(2)
             return np.array((coords[0] - pace / sqrt2, coords[1] - pace / sqrt2))
         elif action == 6:
-            return np.array(coords[0] - pace, coords[1])
+            return np.array((coords[0] - pace, coords[1]))
         else:
             sqrt2 = np.sqrt(2)
             return np.array((coords[0] - pace / sqrt2, coords[1] + pace / sqrt2))

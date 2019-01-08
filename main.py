@@ -202,7 +202,7 @@ for i in range(0, nx):
 
 
 plt.figure()
-# env.plot()
+env.plot()
 plt.contourf(coord1, coord2, M)
 plt.plot(moves_x, moves_y, color="C3", marker="o")
 plt.colorbar()
