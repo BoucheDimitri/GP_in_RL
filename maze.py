@@ -186,14 +186,16 @@ class Maze:
     def plot_goal(goal, ax):
         ax.add_patch(patches.Rectangle((goal[0], goal[1]), goal[2], goal[3], color="C1"))
 
-    def plot(self, npoints=50):
-        fig, ax = plt.subplots()
+    def plot(self, ax=None, npoints=50):
+        if not ax:
+            fig, ax = plt.subplots()
         for barrier in self.barriers:
             Maze.plot_barrier(barrier, ax, npoints)
         for goal in self.goals:
             Maze.plot_goal(goal, ax)
         ax.set_xlim(0, self.len_x)
         ax.set_ylim(0, self.len_y)
+        return ax
 
 
 

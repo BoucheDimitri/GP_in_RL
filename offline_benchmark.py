@@ -1,5 +1,5 @@
 import numpy as np
-import gptd
+from DEPRECATED import gptd
 
 
 def form_H(t, gamma):
