@@ -7,11 +7,13 @@ import utils
 import policies
 import offline_benchmark as off_bench
 import gptd
+import td0
 
 importlib.reload(maze)
 importlib.reload(utils)
 importlib.reload(off_bench)
 importlib.reload(gptd)
+importlib.reload(td0)
 
 
 # ############# BUILD MAZE #############################################################################################
@@ -25,7 +27,7 @@ barrier4 = (0.2, 0.55, 0.5, 0.1)
 env.add_barrier(barrier1[0], barrier1[1], barrier1[2], barrier1[3])
 env.add_barrier(barrier2[0], barrier2[1], barrier2[2], barrier2[3])
 env.add_barrier(barrier3[0], barrier3[1], barrier3[2], barrier3[3])
-# env.add_barrier(barrier4[0], barrier4[1], barrier4[2], barrier4[3])
+env.add_barrier(barrier4[0], barrier4[1], barrier4[2], barrier4[3])
 
 # Set goal regions
 goal1 = (0, 0, 1, 0.05)
@@ -66,8 +68,35 @@ coords1 = np.linspace(0, 1, 100)
 coords2 = np.linspace(0, 1, 100)
 M, S = gptd.mean_variance_matrices(xdict, coords1, coords2, alpha, C, kernel)
 moves_x, moves_y = utils.trajectory_to_moves(xconcat)
-utils.visualization_2D(env, coords1, coords2, S, moves=None)
-utils.visualization_2D(env, coords1, coords2, M, moves=None)
+utils.visualization_2D_discrete(env, coords1, coords2, S, moves=None)
+utils.visualization_2D_discrete(env, coords1, coords2, M, moves=(moves_x, moves_y))
+
+
+# ########## TD0 #######################################################################################################
+# Discretize state space
+env.build_discretization(50, 50)
+
+V = td0.temporal_difference0(env, xconcat, rconcat, gamma)
+
+utils.visualization_2D_discrete(env, env.discrete_rep[0], env.discrete_rep[1], V, moves=None)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

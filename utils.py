@@ -56,6 +56,14 @@ def visualization_2D(env, coords1, coords2, M, moves):
     plt.colorbar(mappable, ax=ax)
 
 
+def visualization_2D_discrete(env, coords1, coords2, M, moves):
+    fig, ax = plt.subplots()
+    env.plot(ax)
+    if moves:
+        ax.plot(moves[0], moves[1], color="C3", marker="o")
+    mappable = ax.pcolor(coords1, coords2, M, cmap=cm.coolwarm)
+    plt.colorbar(mappable, ax=ax)
+
 
 
 

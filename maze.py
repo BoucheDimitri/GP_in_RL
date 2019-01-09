@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import bisect
 import matplotlib.patches as patches
 
 
@@ -15,6 +16,7 @@ class Maze:
         self.rebound = rebound
         self.actions_names = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
         self.opposite_actions = [4, 5, 6, 7, 0, 1, 2, 3]
+        self.discrete_rep = None
 
     def add_barrier(self, start, stop, a, b):
         self.barriers.append((start, stop, a, b))
@@ -180,11 +182,11 @@ class Maze:
     @staticmethod
     def plot_barrier(barrier, ax, npoints):
         linspace = np.linspace(barrier[0], barrier[1], npoints)
-        ax.plot(linspace, [barrier[2] * t + barrier[3] for t in linspace], color="C0")
+        ax.plot(linspace, [barrier[2] * t + barrier[3] for t in linspace], color="k")
 
     @staticmethod
     def plot_goal(goal, ax):
-        ax.add_patch(patches.Rectangle((goal[0], goal[1]), goal[2], goal[3], color="C1"))
+        ax.add_patch(patches.Rectangle((goal[0], goal[1]), goal[2], goal[3], color="C7"))
 
     def plot(self, ax=None, npoints=50):
         if not ax:
@@ -196,6 +198,16 @@ class Maze:
         ax.set_xlim(0, self.len_x)
         ax.set_ylim(0, self.len_y)
         return ax
+
+    def build_discretization(self, nx, ny):
+        xs = np.linspace(0, 1, nx)
+        ys = np.linspace(0, 1, ny)
+        self.discrete_rep = [xs, ys]
+
+    def get_discrete_state(self, s):
+        xpos = bisect.bisect(self.discrete_rep[0], s[0]) - 1
+        ypos = bisect.bisect(self.discrete_rep[1], s[1]) - 1
+        return [xpos, ypos]
 
 
 
