@@ -86,7 +86,7 @@ def test_gptd(x, r, gamma, nu, sigma0, kernel):
         ctcol = ct.reshape((ct.shape[0], 1))
         C = C + (1 / st) * ctcol.dot(ctcol.T)
         atminus1 = at
-        print(t)
+        # print(t)
         # print(st)
     return xdict, alpha, C
 

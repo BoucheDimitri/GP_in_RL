@@ -1,19 +1,28 @@
 import numpy as np
 import importlib
 import matplotlib.pyplot as plt
+import os
+import pickle
 
 import maze
 import utils
 import policies
 import offline_benchmark as off_bench
 import gptd
-import td0
+import td
+import gptd_episodic_improv as improv
+
+# Plot parameters
+plt.rcParams.update({"font.size": 35})
+plt.rcParams.update({"lines.linewidth": 5})
+plt.rcParams.update({"lines.markersize": 10})
 
 importlib.reload(maze)
 importlib.reload(utils)
 importlib.reload(off_bench)
 importlib.reload(gptd)
-importlib.reload(td0)
+importlib.reload(td)
+importlib.reload(improv)
 
 
 # ############# BUILD MAZE #############################################################################################
@@ -68,32 +77,71 @@ coords1 = np.linspace(0, 1, 100)
 coords2 = np.linspace(0, 1, 100)
 M, S = gptd.mean_variance_matrices(xdict, coords1, coords2, alpha, C, kernel)
 moves_x, moves_y = utils.trajectory_to_moves(xconcat)
-utils.visualization_2D_discrete(env, coords1, coords2, S, moves=None)
-utils.visualization_2D_discrete(env, coords1, coords2, M, moves=(moves_x, moves_y))
+ax1 = utils.visualization_2D_discrete(env, coords1, coords2, S, moves=None)
+# ax1.set_title("GPTD - Estimated Variance Map")
+ax2 = utils.visualization_2D_discrete(env, coords1, coords2, M, moves=(moves_x, moves_y))
+# ax2.set_title("GPTD - Estimated Value Map")
 
 
 # ########## TD0 #######################################################################################################
 # Discretize state space
 env.build_discretization(50, 50)
 
-V = td0.temporal_difference0(env, xconcat, rconcat, gamma)
+V = td.temporal_difference0(env, xconcat, rconcat, gamma)
 
-utils.visualization_2D_discrete(env, env.discrete_rep[0], env.discrete_rep[1], V, moves=None)
-
-
-
+ax3 = utils.visualization_2D_discrete(env, env.discrete_rep[0], env.discrete_rep[1], V, moves=None)
+# ax3.set_title("TD0 - Estimated Value Map")
 
 
 
+# ########## TD1 #######################################################################################################
+env.build_discretization(50, 50)
+
+V = td.temporal_difference1(env, trajs, gamma)
+
+with open(os.path.join(os.getcwd(), "VTD0.pickle"), "rb") as inp:
+    V = pickle.load(inp)
+
+ax3 = utils.visualization_2D_discrete(env, env.discrete_rep[0], env.discrete_rep[1], V, moves=None)
+
+
+#
+# # ######## GREEDY POLICY IMPROVEMENT WITH GPTD #########################################################################
+# N = 20
+# T = 100
+# Nimprov = 10
+# Nmc = 20
+# tests = []
+# for n in range(Nmc):
+#     test = improv.gptd_improve(env, Nimprov, N, T, kernel, gamma, nu, sigma0, eps=0.2)
+#     tests.append(test)
+#     print (n)
 
 
 
+# ######## MC ESTIMATION ###############################################################################################
+with open(os.path.join(os.getcwd(), "VTD0.pickle"), "rb") as inp:
+    Vob = pickle.load(inp)
+
+Ngrid = np.arange(1, 20, 1)
+Navg = 100
+errors_gptd, errors_td0 = utils.comp_gptd_td0(env, Vob, policy, Ngrid, Navg, T, gamma, nu, sigma0, kernel)
+
+with open(os.path.join(os.getcwd(), "errors_GPTD.pickle"), "wb") as outp:
+    pickle.dump(errors_gptd, outp, pickle.HIGHEST_PROTOCOL)
+
+
+with open(os.path.join(os.getcwd(), "errors_TD0.pickle"), "wb") as outp:
+    pickle.dump(errors_td0, outp, pickle.HIGHEST_PROTOCOL)
 
 
 
+with open(os.path.join(os.getcwd(), "errors_GPTD.pickle"), "rb") as inp:
+    errors_gptd = pickle.load(inp)
 
 
-
+with open(os.path.join(os.getcwd(), "errors_TD0.pickle"), "rb") as inp:
+    errors_td0 = pickle.load(inp)
 
 
 

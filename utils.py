@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
+import gptd
+import td
+
 
 def collect_trajectories(env, policy, T, N):
     trajs = []
@@ -51,18 +54,49 @@ def visualization_2D(env, coords1, coords2, M, moves):
     fig, ax = plt.subplots()
     env.plot(ax)
     if moves:
-        ax.plot(moves[0], moves[1], color="C3", marker="o")
+        ax.scatter(moves[0], moves[1], c="C3")
     mappable = ax.contourf(coords1, coords2, M, cmap=cm.coolwarm)
     plt.colorbar(mappable, ax=ax)
+    return ax
 
 
 def visualization_2D_discrete(env, coords1, coords2, M, moves):
     fig, ax = plt.subplots()
     env.plot(ax)
     if moves:
-        ax.plot(moves[0], moves[1], color="C3", marker="o")
+        ax.scatter(moves[0], moves[1], c="C3")
     mappable = ax.pcolor(coords1, coords2, M, cmap=cm.coolwarm)
     plt.colorbar(mappable, ax=ax)
+    return ax
+
+
+def comp_gptd_td0(env, Vob, policy, Ngrid, Navg, T, gamma, nu, sigma0, kernel):
+    error_gptd = []
+    error_td0 = []
+    for N in Ngrid:
+        egptd = 0
+        etd0 = 0
+        for i in range(Navg):
+            trajs = collect_trajectories(env, policy, T, N)
+            # Stack trajectories in lists
+            xlist = [tr["states"] for tr in trajs]
+            rlist = [tr["rewards"] for tr in trajs]
+            # Concatenate trajectories
+            xconcat, rconcat = concatenate_trajectories(xlist, rlist)
+            # Rune GPTD
+            xdict, alpha, C = gptd.test_gptd(xconcat, rconcat, gamma, nu, sigma0, kernel)
+            # Discretization (take the middle of the squares
+            coords1 = env.discrete_rep[0] + (1 / (2 * env.discrete_rep[0].shape[0]))
+            coords2 = env.discrete_rep[1] + (1 / (2 * env.discrete_rep[1].shape[0]))
+            Vgptd, S = gptd.mean_variance_matrices(xdict, coords1, coords2, alpha, C, kernel)
+            Vtd0 = td.temporal_difference0(env, xconcat, rconcat, gamma)
+            egptd += (1 / Navg) * np.mean((Vgptd - Vob) ** 2)
+            etd0 += (1 / Navg) * np.mean((Vtd0 - Vob) ** 2)
+        error_gptd.append(egptd)
+        error_td0.append(etd0)
+        print(N)
+    return error_gptd, error_td0
+
 
 
 
