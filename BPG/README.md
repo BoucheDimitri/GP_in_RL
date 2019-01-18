@@ -1,1 +1,2 @@
 # Bayesian Policy Gradient  
+Here, we present another application of GPs to Policy gradients (PG). This family of algorithms is based on a parameter-dependent policy. The optimization of these parameters is done thanks to a gradient descent using an empirical estimation of the gradient. One possible way to estimate this gradient is to use a Monte Carlo method. However a widely known drawback is the high variance in the estimation of the gradient which implies poor sample efficiency and slow convergence.
