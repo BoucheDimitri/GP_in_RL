@@ -16,7 +16,7 @@ def gptd_improve(env, Nimprov, N, T, kernel, gamma, nu, sigma0, eps=0.2):
         # Concatenate trajectories
         xconcat, rconcat = utils.concatenate_trajectories(xlist, rlist)
         # Run GPTD for value function estimation
-        xdict, alpha, C = gptd.test_gptd(xconcat, rconcat, gamma, nu, sigma0, kernel)
+        xdict, alpha, C = gptd.iterate_gptd(xconcat, rconcat, gamma, nu, sigma0, kernel)
         cum_rewards.append(np.sum(rconcat))
         # Improve policy
         policy = policies.GreedyImprovedPolicy(alpha, C, xdict, kernel, eps)

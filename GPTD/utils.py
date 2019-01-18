@@ -84,7 +84,7 @@ def comp_gptd_td0(env, Vob, policy, Ngrid, Navg, T, gamma, nu, sigma0, kernel):
             # Concatenate trajectories
             xconcat, rconcat = concatenate_trajectories(xlist, rlist)
             # Rune GPTD
-            xdict, alpha, C = gptd.test_gptd(xconcat, rconcat, gamma, nu, sigma0, kernel)
+            xdict, alpha, C = gptd.iterate_gptd(xconcat, rconcat, gamma, nu, sigma0, kernel)
             # Discretization (take the middle of the squares
             coords1 = env.discrete_rep[0] + (1 / (2 * env.discrete_rep[0].shape[0]))
             coords2 = env.discrete_rep[1] + (1 / (2 * env.discrete_rep[1].shape[0]))

@@ -17,6 +17,7 @@ plt.rcParams.update({"font.size": 35})
 plt.rcParams.update({"lines.linewidth": 5})
 plt.rcParams.update({"lines.markersize": 10})
 
+# Reload modules, for developpement
 importlib.reload(maze)
 importlib.reload(utils)
 importlib.reload(off_bench)
@@ -70,7 +71,7 @@ nu = 0.05
 sigma0 = 1
 
 # Rune GPTD
-xdict, alpha, C = gptd.test_gptd(xconcat, rconcat, gamma, nu, sigma0, kernel)
+xdict, alpha, C = gptd.iterate_gptd(xconcat, rconcat, gamma, nu, sigma0, kernel)
 
 # Vizualization
 coords1 = np.linspace(0, 1, 100)
@@ -94,32 +95,8 @@ ax3 = utils.visualization_2D_discrete(env, env.discrete_rep[0], env.discrete_rep
 
 
 
-# ########## TD1 #######################################################################################################
-env.build_discretization(50, 50)
-
-V = td.temporal_difference1(env, trajs, gamma)
-
-with open(os.path.join(os.getcwd(), "VTD0.pickle"), "rb") as inp:
-    V = pickle.load(inp)
-
-ax3 = utils.visualization_2D_discrete(env, env.discrete_rep[0], env.discrete_rep[1], V, moves=None)
-
-
-#
-# # ######## GREEDY POLICY IMPROVEMENT WITH GPTD #########################################################################
-# N = 20
-# T = 100
-# Nimprov = 10
-# Nmc = 20
-# tests = []
-# for n in range(Nmc):
-#     test = improv.gptd_improve(env, Nimprov, N, T, kernel, gamma, nu, sigma0, eps=0.2)
-#     tests.append(test)
-#     print (n)
-
-
-
 # ######## MC ESTIMATION ###############################################################################################
+# Load value map objective from pickle object
 with open(os.path.join(os.getcwd(), "VTD0.pickle"), "rb") as inp:
     Vob = pickle.load(inp)
 
@@ -127,22 +104,21 @@ Ngrid = np.arange(1, 20, 1)
 Navg = 100
 errors_gptd, errors_td0 = utils.comp_gptd_td0(env, Vob, policy, Ngrid, Navg, T, gamma, nu, sigma0, kernel)
 
-with open(os.path.join(os.getcwd(), "errors_GPTD.pickle"), "wb") as outp:
-    pickle.dump(errors_gptd, outp, pickle.HIGHEST_PROTOCOL)
-
-
-with open(os.path.join(os.getcwd(), "errors_TD0.pickle"), "wb") as outp:
-    pickle.dump(errors_td0, outp, pickle.HIGHEST_PROTOCOL)
-
-
-
-with open(os.path.join(os.getcwd(), "errors_GPTD.pickle"), "rb") as inp:
-    errors_gptd = pickle.load(inp)
-
-
-with open(os.path.join(os.getcwd(), "errors_TD0.pickle"), "rb") as inp:
-    errors_td0 = pickle.load(inp)
-
+# with open(os.path.join(os.getcwd(), "errors_GPTD.pickle"), "wb") as outp:
+#     pickle.dump(errors_gptd, outp, pickle.HIGHEST_PROTOCOL)
+#
+#
+# with open(os.path.join(os.getcwd(), "errors_TD0.pickle"), "wb") as outp:
+#     pickle.dump(errors_td0, outp, pickle.HIGHEST_PROTOCOL)
+#
+#
+# with open(os.path.join(os.getcwd(), "errors_GPTD.pickle"), "rb") as inp:
+#     errors_gptd = pickle.load(inp)
+#
+#
+# with open(os.path.join(os.getcwd(), "errors_TD0.pickle"), "rb") as inp:
+#     errors_td0 = pickle.load(inp)
+#
 
 
 
