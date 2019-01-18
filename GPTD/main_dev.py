@@ -1,6 +1,8 @@
 import numpy as np
 import importlib
 import matplotlib.pyplot as plt
+import os
+import pickle
 
 import maze
 import utils
@@ -77,9 +79,9 @@ coords2 = np.linspace(0, 1, 100)
 M, S = gptd.mean_variance_matrices(xdict, coords1, coords2, alpha, C, kernel)
 moves_x, moves_y = utils.trajectory_to_moves(xconcat)
 ax1 = utils.visualization_2D_discrete(env, coords1, coords2, S, moves=None)
-ax1.set_title("GPTD - Estimated Variance Map")
+# ax1.set_title("GPTD - Estimated Variance Map")
 ax2 = utils.visualization_2D_discrete(env, coords1, coords2, M, moves=(moves_x, moves_y))
-ax2.set_title("GPTD - Estimated Value Map")
+# ax2.set_title("GPTD - Estimated Value Map")
 
 
 # ########## TD0 #######################################################################################################
@@ -89,31 +91,73 @@ env.build_discretization(50, 50)
 V = td.temporal_difference0(env, xconcat, rconcat, gamma)
 
 ax3 = utils.visualization_2D_discrete(env, env.discrete_rep[0], env.discrete_rep[1], V, moves=None)
-ax3.set_title("TD0 - Estimated Value Map")
+# ax3.set_title("TD0 - Estimated Value Map")
+
+
+
+# ######## MC ESTIMATION ###############################################################################################
+# Load value map objective from pickle object
+with open(os.path.join(os.getcwd(), "VTD0.pickle"), "rb") as inp:
+    Vob = pickle.load(inp)
+
+Ngrid = np.arange(1, 20, 1)
+Navg = 100
+errors_gptd, errors_td0 = utils.comp_gptd_td0(env, Vob, policy, Ngrid, Navg, T, gamma, nu, sigma0, kernel)
+
+# with open(os.path.join(os.getcwd(), "errors_GPTD.pickle"), "wb") as outp:
+#     pickle.dump(errors_gptd, outp, pickle.HIGHEST_PROTOCOL)
+#
+#
+# with open(os.path.join(os.getcwd(), "errors_TD0.pickle"), "wb") as outp:
+#     pickle.dump(errors_td0, outp, pickle.HIGHEST_PROTOCOL)
+#
+#
+# with open(os.path.join(os.getcwd(), "errors_GPTD.pickle"), "rb") as inp:
+#     errors_gptd = pickle.load(inp)
+#
+#
+# with open(os.path.join(os.getcwd(), "errors_TD0.pickle"), "rb") as inp:
+#     errors_td0 = pickle.load(inp)
+#
 
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# ################" OFFLINE BENCHMARK ###############################################################""
+#
+# xdict_bis = utils.trajectory_list_to_ndarray(x)
+# rbis = np.array(r)
+#
+# t = xdict_bis.shape[1]
+# H = off_bench.form_H(t, gamma)
+# Q = off_bench.form_Q(xdict_bis, H, sigma0, kernel)
+# alpha = off_bench.compute_alpha(H, Q, rbis[:t-1])
+# C = off_bench.compute_C(H, Q)
+#
+#
+# coord1, coord2 = np.meshgrid(np.arange(0, 1.05, 0.05), np.arange(0, 1.05, 0.05))
+# nx = coord1.shape[0]
+# M = np.zeros((coord1.shape[0], coord1.shape[0]))
+# S = np.zeros((coord1.shape[0], coord1.shape[0]))
+#
+# for i in range(0, nx):
+#     for j in range(0, nx):
+#         xnew = np.array([coord1[i, j], coord2[i, j]])
+#         v, p = off_bench.get_mean_variance(xdict_bis, xnew, alpha, C, kernel)
+#         M[i, j] = v
+#         S[i, j] = p
+#
+#
+#
+# plt.figure()
+# env.plot()
+# plt.contourf(coord1, coord2, M)
+# plt.plot(moves_x, moves_y, color="C3", marker="o")
+# plt.colorbar()
+#
+#
+#
+#
 
